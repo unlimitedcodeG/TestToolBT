@@ -1,0 +1,12 @@
+[project]
+name = "u"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.9"
+dependencies = [
+    "allure-pytest>=2.14.2",
+    "flask>=3.1.0",
+    "opencv-python>=4.11.0.86",
+    "requests>=2.32.3",
+]
