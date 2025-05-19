@@ -10,5 +10,5 @@ print(sys.getrefcount(a))
 
 del b  # 删除引用，引用计数 −1
 print(sys.getrefcount(a))
-
+# sys.getrefcount(a) 这个是2 但是a 原本只是1
 del a  # 再−1，变为 0，立即触发内存释放
