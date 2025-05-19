@@ -2,9 +2,9 @@ import unittest
 import allure
 import cv2
 import numpy as np
+from skimage.metrics import structural_similarity as ssim
 
 
-# 示例：简单的按钮点击测试
 @allure.feature("Game Test")
 @allure.story("Start Button Test")
 def test_start_button():
@@ -13,7 +13,6 @@ def test_start_button():
     assert True  # 假设点击操作正常
 
 
-# 示例：简单的角色移动测试
 @allure.feature("Game Test")
 @allure.story("Character Move Test")
 def test_character_move():
@@ -22,43 +21,45 @@ def test_character_move():
     assert True  # 假设移动操作正常
 
 
-# 示例：图像识别与对比测试
 @allure.feature("Game Test")
 @allure.story("Image Recognition Test")
 def test_image_recognition():
     print("Test: Image Recognition Started!")
 
-    # 读取图像
-    image1 = cv2.imread("screenshot.png", cv2.IMREAD_GRAYSCALE)  # 屏幕截图
-    image2 = cv2.imread("expected_image.png", cv2.IMREAD_GRAYSCALE)  # 预期图像
+    # 1. 读入 & 归一化到 [0,1]
+    img1 = cv2.imread("screenshot.png", cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
+    img2 = (
+        cv2.imread("expected_image.png", cv2.IMREAD_GRAYSCALE).astype(np.float32)
+        / 255.0
+    )
 
-    # 使用OpenCV的模板匹配方法进行图像对比
-    res = cv2.matchTemplate(image1, image2, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.9  # 设置匹配的阈值
+    # 2. 形状校验
+    assert img1.shape == img2.shape, f"Dimension mismatch: {img1.shape} vs {img2.shape}"
 
-    # 获取匹配结果
-    loc = np.where(res >= threshold)
+    # 3. 快速差值检查
+    diff = np.abs(img1 - img2)
+    mean_diff = diff.mean()
+    assert mean_diff < 0.05, f"Mean pixel diff too big: {mean_diff:.4f}"
 
-    for pt in zip(*loc[::-1]):
-        print(f"匹配区域的位置：{pt}")
-        cv2.rectangle(
-            image1,
-            pt,
-            (pt[0] + image2.shape[1], pt[1] + image2.shape[0]),
-            (0, 0, 255),
-            2,
-        )
+    # 4. 阈值像素占比检查
+    bad_ratio = np.count_nonzero(diff > 0.1) / diff.size
+    assert bad_ratio < 0.02, f"Bad-pixel ratio too high: {bad_ratio:.2%}"
 
-    # 显示匹配结果
-    cv2.imshow("Match", image1)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # 5. 精细 SSIM 判断
+    score = ssim(
+        img1,
+        img2,
+        data_range=1.0,
+        gaussian_weights=True,
+        sigma=1.5,
+        use_sample_covariance=False,
+    )
+    print(f"Image similarity score: {score * 100:.2f}%")
+    assert score >= 0.95, f"SSIM below threshold: {score:.4f}"
 
-    # 如果没有匹配，抛出异常
-    assert len(loc[0]) > 0, "No match found!"
+    print("Test passed!")
 
 
-# 测试类的实现
 class TestGameAutomation(unittest.TestCase):
 
     def test_button_click(self):
@@ -72,5 +73,4 @@ class TestGameAutomation(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # 运行指定的测试用例
     unittest.main()

@@ -8,5 +8,9 @@ dependencies = [
     "allure-pytest>=2.14.2",
     "flask>=3.1.0",
     "opencv-python>=4.11.0.86",
+    "pytest-result-log>=1.2.2",
+    "pytest-xdist>=3.6.1",
     "requests>=2.32.3",
+    "scikit-image>=0.25.2",
+    "scikit-learn>=1.6.1",
 ]
